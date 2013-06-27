@@ -16,8 +16,17 @@ func assert(t *testing.T, actual bool) {
   }
 }
 
+type intMappable []int
+func (im intMappable) At(i int) interface{} {
+  return im[i]
+}
+
+func (im intMappable) Len() int {
+  return len(im)
+}
+
 func TestEmptySliceDoesNothing(t *testing.T) {
-  mappable := []interface{}{}
+  mappable := intMappable{}
   Map(mappable, func(val interface{}) interface{} {
     t.Error("Should not raise this")
     return nil
@@ -25,7 +34,7 @@ func TestEmptySliceDoesNothing(t *testing.T) {
 }
 
 func TestIdentityMapping(t *testing.T) {
-  mappable := []interface{}{1, 2, 3, 4, 5}
+  mappable := intMappable{1, 2, 3, 4, 5}
   result := Map(mappable, func(val interface{}) interface{} {
     return val
   })
@@ -38,7 +47,7 @@ func TestIdentityMapping(t *testing.T) {
 }
 
 func TestDoubleMap(t *testing.T) {
-  mappable := []interface{}{1, 2, 3, 4, 5}
+  mappable := intMappable{1, 2, 3, 4, 5}
   result := Map(mappable, func(val interface{}) interface{} {
     return val.(int) * 2
   })

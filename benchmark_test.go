@@ -10,10 +10,10 @@ func init() {
   runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
-func MapOneCpu(mappable []interface{}, mappingFunc func(interface{})interface{}) []interface{} {
-  result := make([]interface{}, len(mappable))
-  for i, v := range mappable {
-    result[i] = mappingFunc(v)
+func MapOneCpu(mappable Mappable, mappingFunc mappingFuncType) []interface{} {
+  result := make([]interface{}, mappable.Len())
+  for i := 0; i < mappable.Len(); i++ {
+    result[i] = mappingFunc(mappable.At(i))
   }
 
   return result
@@ -34,9 +34,9 @@ func expensiveIOBoundFunction(val interface{}) interface{} {
   return val
 }
 
-func benchmark(b *testing.B, mapFunction func([]interface{}, func(interface{})interface{}) []interface{} ,expensiveFunction func(interface{}) interface{}) {
+func benchmark(b *testing.B, mapFunction func(Mappable, mappingFuncType) []interface{} ,expensiveFunction func(interface{}) interface{}) {
   sliceSize := 100
-  mappable := make([]interface{}, sliceSize)
+  mappable := make(intMappable, sliceSize)
 
   for i := 0; i < sliceSize; i++ {
     mappable[i] = i
