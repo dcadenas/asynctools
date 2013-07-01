@@ -39,16 +39,13 @@ func TestEmptySliceDoesNothing(t *testing.T) {
 }
 
 func TestIdentityMapping(t *testing.T) {
-	mappable := intMappable{1, 2, 3, 4, 5}
+	mappable := intMappable{1, 2}
 	result := Map(mappable, func(val interface{}) interface{} {
 		return val
 	})
 
 	assertEqual(t, result[0], 1)
 	assertEqual(t, result[1], 2)
-	assertEqual(t, result[2], 3)
-	assertEqual(t, result[3], 4)
-	assertEqual(t, result[4], 5)
 }
 
 func TestDoubleMap(t *testing.T) {

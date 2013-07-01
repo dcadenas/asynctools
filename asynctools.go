@@ -31,7 +31,7 @@ func Map(mappable Mappable, mappingFunc mappingFuncType) []interface{} {
 
 	doneChan := make(chan struct{})
 	head, goRoutinesCount := 0, 0
-	for tail := chunkSize + remainder; tail <= mappable.Len(); tail += chunkSize {
+	for tail := chunkSize + remainder; head < mappable.Len(); tail += chunkSize {
 		inSlice := mappable.Slice(head, tail)
 		goRoutinesCount++
 		go worker(mappingFunc, inSlice, resultSlice[head:tail], doneChan)
