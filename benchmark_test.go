@@ -1,66 +1,66 @@
 package asynctools
 
 import (
-  "testing"
-  "runtime"
-  "time"
+	"runtime"
+	"testing"
+	"time"
 )
 
 func init() {
-  runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func MapOneCpu(mappable Mappable, mappingFunc mappingFuncType) []interface{} {
-  result := make([]interface{}, mappable.Len())
-  for i := 0; i < mappable.Len(); i++ {
-    result[i] = mappingFunc(mappable.At(i))
-  }
+	result := make([]interface{}, mappable.Len())
+	for i := 0; i < mappable.Len(); i++ {
+		result[i] = mappingFunc(mappable.At(i))
+	}
 
-  return result
+	return result
 }
 
 func expensiveCPUBoundFunction(val interface{}) interface{} {
-  value := val.(int)
+	value := val.(int)
 
-  for i := 1; i < 1000; i++ {
-    value += value
-  }
+	for i := 1; i < 1000; i++ {
+		value += value
+	}
 
-  return value
+	return value
 }
 
 func expensiveIOBoundFunction(val interface{}) interface{} {
-  time.Sleep(1 * time.Millisecond)
-  return val
+	time.Sleep(1 * time.Millisecond)
+	return val
 }
 
-func benchmark(b *testing.B, mapFunction func(Mappable, mappingFuncType) []interface{} ,expensiveFunction func(interface{}) interface{}) {
-  sliceSize := 100
-  mappable := make(intMappable, sliceSize)
+func benchmark(b *testing.B, mapFunction func(Mappable, mappingFuncType) []interface{}, expensiveFunction func(interface{}) interface{}) {
+	sliceSize := 100
+	mappable := make(intMappable, sliceSize)
 
-  for i := 0; i < sliceSize; i++ {
-    mappable[i] = i
-  }
+	for i := 0; i < sliceSize; i++ {
+		mappable[i] = i
+	}
 
-  b.ResetTimer()
+	b.ResetTimer()
 
-  for i := 0; i < b.N; i++ {
-    mapFunction(mappable, expensiveFunction)
-  }
+	for i := 0; i < b.N; i++ {
+		mapFunction(mappable, expensiveFunction)
+	}
 }
 
 func BenchmarkCPUBoundSingle(b *testing.B) {
-  benchmark(b, MapOneCpu, expensiveCPUBoundFunction)
+	benchmark(b, MapOneCpu, expensiveCPUBoundFunction)
 }
 
 func BenchmarkCPUBoundMulti(b *testing.B) {
-  benchmark(b, Map, expensiveCPUBoundFunction)
+	benchmark(b, Map, expensiveCPUBoundFunction)
 }
 
 func BenchmarkIOBoundSingle(b *testing.B) {
-  benchmark(b, MapOneCpu, expensiveIOBoundFunction)
+	benchmark(b, MapOneCpu, expensiveIOBoundFunction)
 }
 
 func BenchmarkIOBoundMulti(b *testing.B) {
-  benchmark(b, Map, expensiveIOBoundFunction)
+	benchmark(b, Map, expensiveIOBoundFunction)
 }
