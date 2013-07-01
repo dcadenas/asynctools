@@ -5,44 +5,42 @@ import "runtime"
 type Mappable interface {
   At(int) interface{}
   Len()int
-}
-
-type sliceElement struct {
-  index int
-  value interface{}
+  Slice(int, int) Mappable
 }
 
 type mappingFuncType func(interface{})interface{}
 
-func worker(mappingFunc mappingFuncType, inChannel, outChannel chan sliceElement) {
-  for elem := range inChannel {
-    outChannel <- sliceElement{elem.index, mappingFunc(elem.value)}
+func worker(mappingFunc mappingFuncType, inSlice Mappable, outSlice []interface{}, doneChan chan struct{}) {
+  for i := 0; i < inSlice.Len(); i++ {
+    outSlice[i] = mappingFunc(inSlice.At(i))
   }
+
+  doneChan <- struct{}{}
 }
 
 func Map(mappable Mappable, mappingFunc mappingFuncType) []interface{} {
+  resultSlice := make([]interface{}, mappable.Len())
+
+  if mappable.Len() == 0 {
+    return resultSlice
+  }
+
   cpus := runtime.NumCPU()
+  chunkSize := mappable.Len() / cpus
+  remainder := mappable.Len() % cpus
 
-  inChannel := make(chan sliceElement, mappable.Len())
-  go func() {
-    for i := 0; i < mappable.Len(); i++ {
-      inChannel <- sliceElement{i, mappable.At(i)}
-    }
-
-    close(inChannel)
-  }()
-
-  outChannel := make(chan sliceElement, mappable.Len())
-  for i:= 0; i < cpus; i++ {
-    go worker(mappingFunc, inChannel, outChannel)
+  doneChan := make(chan struct{})
+  head , goRoutinesCount := 0, 0
+  for tail := chunkSize + remainder; tail <= mappable.Len(); tail += chunkSize {
+    inSlice := mappable.Slice(head, tail)
+    goRoutinesCount++
+    go worker(mappingFunc, inSlice, resultSlice[head:tail], doneChan)
+    head = tail
   }
 
-  result := make([]interface{}, mappable.Len())
-
-  for i := 0; i < mappable.Len(); i++{
-    v := <- outChannel
-    result[v.index] = v.value
+  for i := 0; i < goRoutinesCount; i++ {
+    <- doneChan
   }
 
-  return result
+  return resultSlice
 }

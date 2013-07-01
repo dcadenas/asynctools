@@ -22,7 +22,7 @@ func MapOneCpu(mappable Mappable, mappingFunc mappingFuncType) []interface{} {
 func expensiveCPUBoundFunction(val interface{}) interface{} {
   value := val.(int)
 
-  for i := 1; i < 10000; i++ {
+  for i := 1; i < 1000; i++ {
     value += value
   }
 

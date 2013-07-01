@@ -25,6 +25,10 @@ func (im intMappable) Len() int {
   return len(im)
 }
 
+func (im intMappable) Slice(h, t int) Mappable {
+  return im[h:t]
+}
+
 func TestEmptySliceDoesNothing(t *testing.T) {
   mappable := intMappable{}
   Map(mappable, func(val interface{}) interface{} {
