@@ -1,6 +1,9 @@
 package asynctools
 
-import "runtime"
+import (
+  "runtime"
+  "sync"
+)
 
 type Mappable interface {
 	At(int) interface{}
@@ -10,12 +13,18 @@ type Mappable interface {
 
 type mappingFuncType func(interface{}) interface{}
 
-func worker(mappingFunc mappingFuncType, inSlice Mappable, outSlice []interface{}, doneChan chan struct{}) {
+func worker(mappingFunc mappingFuncType, inSlice Mappable, outSlice []interface{}, wg *sync.WaitGroup) {
+  defer wg.Done()
+
 	for i := 0; i < inSlice.Len(); i++ {
 		outSlice[i] = mappingFunc(inSlice.At(i))
 	}
+}
 
-	doneChan <- struct{}{}
+var cpus int
+
+func init() {
+  cpus = runtime.NumCPU()
 }
 
 func Map(mappable Mappable, mappingFunc mappingFuncType) []interface{} {
@@ -25,22 +34,24 @@ func Map(mappable Mappable, mappingFunc mappingFuncType) []interface{} {
 		return resultSlice
 	}
 
-	cpus := runtime.NumCPU()
 	chunkSize := mappable.Len() / cpus
 	remainder := mappable.Len() % cpus
 
-	doneChan := make(chan struct{})
-	head, goRoutinesCount := 0, 0
+  var wg sync.WaitGroup
+	head := 0
+
+  //for each chunk
 	for tail := chunkSize + remainder; head < mappable.Len(); tail += chunkSize {
 		inSlice := mappable.Slice(head, tail)
-		goRoutinesCount++
-		go worker(mappingFunc, inSlice, resultSlice[head:tail], doneChan)
+
+    wg.Add(1)
+
+    go worker(mappingFunc, inSlice, resultSlice[head:tail], &wg)
+
 		head = tail
 	}
 
-	for i := 0; i < goRoutinesCount; i++ {
-		<-doneChan
-	}
+  wg.Wait()
 
 	return resultSlice
 }

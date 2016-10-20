@@ -50,6 +50,7 @@ func TestIdentityMapping(t *testing.T) {
 
 func TestDoubleMap(t *testing.T) {
 	mappable := intMappable{1, 2, 3, 4, 5}
+
 	result := Map(mappable, func(val interface{}) interface{} {
 		return val.(int) * 2
 	})

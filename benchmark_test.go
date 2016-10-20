@@ -34,7 +34,9 @@ func expensiveIOBoundFunction(val interface{}) interface{} {
 	return val
 }
 
-func benchmark(b *testing.B, mapFunction func(Mappable, mappingFuncType) []interface{}, expensiveFunction func(interface{}) interface{}) {
+var result []interface{}
+
+func benchmark(b *testing.B, mapFunction func(Mappable, mappingFuncType) []interface{}, expensiveFunction mappingFuncType) {
 	sliceSize := 100
 	mappable := make(intMappable, sliceSize)
 
@@ -44,9 +46,14 @@ func benchmark(b *testing.B, mapFunction func(Mappable, mappingFuncType) []inter
 
 	b.ResetTimer()
 
+  //See http://dave.cheney.net/2013/06/30/how-to-write-benchmarks-in-go
+  var r []interface{}
+
 	for i := 0; i < b.N; i++ {
-		mapFunction(mappable, expensiveFunction)
+		r = mapFunction(mappable, expensiveFunction)
 	}
+
+  result = r
 }
 
 func BenchmarkCPUBoundSingle(b *testing.B) {
